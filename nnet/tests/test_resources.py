@@ -1,0 +1,101 @@
+#! /usr/bin/env python
+"""!
+-----------------------------------------------------------------------------
+File Name: test_resources.py
+
+Purpose: Test the resources components of the package
+
+Created: 04-Aug-2016 14:34:55 AEST
+-----------------------------------------------------------------------------
+Revision History
+
+
+-----------------------------------------------------------------------------
+S.D.G
+"""
+__author__ = 'Ben Johnston'
+__revision__ = '0.1'
+__date__ = '04-Aug-2016 14:34:55 AEST'
+__license__ = 'MPL v2.0'
+
+# LICENSE DETAILS############################################################
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# IMPORTS#####################################################################
+import unittest
+from unittest.mock import Mock
+import nnet.resources as resources 
+import os
+import pandas
+import numpy as np
+from collections import OrderedDict
+##############################################################################
+
+class TestResources(unittest.TestCase):
+    """Test the resources"""
+
+    def setUp(self):
+        self.train_data = resources.load_training_data()
+
+    def test_resources_path(self):
+        """Test the correct resources path """
+        # Check the path is correct
+        self.assertEqual(os.path.relpath(resources.RESOURCE_DIR, __file__), 
+                '../../resources') 
+
+    def test_training_set_filename(self):
+        """Test the training set filename"""
+        # Check the default training set name
+        self.assertEqual(os.path.basename(resources.DEFAULT_TRAIN_SET), 'training.csv')
+
+    def test_load_training_data(self):
+        """Load the training set"""
+        train_data = self.train_data
+        # Check the default number of training samples
+        self.assertEqual(train_data.shape[0], 7049, 'incorrect number of training samples %d != %d' %
+                (train_data.shape[0], 7049))
+        self.assertEqual(train_data.shape[1], 31, 'incorrect number of training features %d != %d' %
+                (train_data.shape[1], 31))
+
+    def test_remove_incomplete(self):
+        """Remove incomplete data"""
+        train_data = pandas.DataFrame(np.array([
+                [1, 2],
+                [3, 4],
+                [5, np.NaN]]))
+        selected_data = resources.remove_incomplete_data(train_data)
+        self.assertLess(selected_data.shape[0], train_data.shape[0])
+        self.assertEqual(selected_data.shape[1], 2)
+
+    def test_image_landmark_extraction(self):
+        """Extract landmarks and images"""
+        train_data = self.train_data
+        x, y = resources.extract_image_landmarks(train_data)
+        self.assertEqual(len(x),len(y))
+        self.assertEqual(x.shape[1], 96 ** 2)
+        self.assertEqual(y.shape[1], 30)
+
+    #@unittest.skip("demonstrating skipping")
+    def test_splitting_training_data(self):
+        """Test default train / valid set split"""
+        train_data = resources.remove_incomplete_data(self.train_data)
+        x, y = resources.extract_image_landmarks(train_data)
+
+        for split_ratio in [0.5, 0.7]:
+            x_train, y_train, x_valid, y_valid = \
+                    resources.split_training_data(x, y, split_ratio=split_ratio)
+            split_ratio_calculated = np.round(len(x_train) / (len(x_train) + len(x_valid)), 1)
+            with self.subTest(split_ratio=split_ratio):
+                # Check equal lengths
+                self.assertEqual(len(x_train), len(y_train), 'x and y train dataset lengths not equal: %d != %d' %
+                        (len(x_train), len(y_train)))
+                self.assertEqual(len(x_valid), len(y_valid), 'x and y valid dataset lengths not equal: %d != %d' %
+                        (len(x_valid), len(y_valid)))
+                # Check the correct ratios
+                self.assertEqual(split_ratio_calculated, split_ratio,
+                    'incorrect split ratio: %0.2f' % split_ratio_calculated) 
+                # Check the shape of the features
+                self.assertEqual(x_train.shape[1], 96 ** 2)
+                self.assertEqual(y_train.shape[1], 30)
