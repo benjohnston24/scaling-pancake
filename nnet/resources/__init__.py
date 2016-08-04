@@ -97,8 +97,3 @@ def split_training_data(x, y, split_ratio=0.7):
                          random_state=int(time.time()))
 
     return x_train, y_train, x_valid, y_valid 
-
-if __name__ == "__main__":
-    dat = remove_incomplete_data(load_training_data())
-    split_training_data([1, 2, 3],[4,5,6])
-
