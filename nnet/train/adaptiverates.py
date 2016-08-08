@@ -29,9 +29,37 @@ import numpy as np
 ##############################################################################
 
 class fixedRate(object):
+    """Fixed Rate class
+
+    Parameters
+    ------------
+
+    rate: The fixed rate to be used 
+
+    Returns
+    ------------
+
+    the rate when the object is called 
+    """
 
     def __init__(self, rate):
+
         self.rate = rate
 
     def __call__(self):
         return self.rate
+
+class linearRate(object):
+    """Linear rate class"""
+
+    def __init__(self, start, end, epochs):
+
+        self.start = start
+        self.end = end
+        self.epochs = epochs
+        self.rates = list(np.linspace(start, end, epochs))
+
+    def __iter__(self):
+        if len(self.rates) <= 0:
+            raise StopIteration
+        yield self.rates.pop(0)

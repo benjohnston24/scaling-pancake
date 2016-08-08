@@ -25,8 +25,36 @@ __license__ = 'MPL v2.0'
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # IMPORTS#####################################################################
+from . import adaptiverates
 ##############################################################################
 
 __all__ = [
         "adaptiverates",
+        "trainBase",
         ]
+
+class trainBase(object):
+
+    def __init__(self):
+        pass
+
+    def model(self):
+        pass
+
+    def build_model(self):
+        pass
+
+    def iterate_minibatches(self):
+        pass
+
+    def train(self):
+        pass
+
+    def predict(self):
+        pass
+
+    def save_params(self):
+        pass
+
+    def load_params(self): 
+        pass

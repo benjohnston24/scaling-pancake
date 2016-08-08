@@ -25,7 +25,6 @@ __license__ = 'MPL v2.0'
 
 # IMPORTS#####################################################################
 import unittest
-from unittest.mock import Mock
 import nnet.resources as resources 
 import os
 import pandas

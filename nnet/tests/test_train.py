@@ -26,15 +26,39 @@ __license__ = 'MPL v2.0'
 
 # IMPORTS#####################################################################
 import unittest
-import nnet
+import nnet.train as train
 ##############################################################################
 
 class TestRates(unittest.TestCase):
     """Test the adaptive rates"""
 
-    def  test_fixed_rate(self):
-        print(dir(nnet))
-        pass
-        #rate = train.adaptiverates.fixedRate(0.2)
-        #self.assertEqual(rate(), 0.2)
+    def test_fixed_rate(self):
+        """Test fixed rate learning rate"""
+        rate = train.adaptiverates.fixedRate(0.2)
+        self.assertEqual(rate(), 0.2)
+
+
+    def test_linear_rate(self):
+        """Test linear rate learning rate"""
+        rate = train.adaptiverates.linearRate(start=10, end=1, epochs=10)
+        rate_check = 10
+
+        for step in rate:
+            with self.subTest(rate_check = rate_check):
+                # Assert the same linear rate
+                self.assertEqual(step, rate_check, "linear rate error {} != {}".format(step, rate_check))
+
+class TestTrainClass(unittest.TestCase):
+    """Test the training base class"""
+
+    def test_attributes(self):
+        """Test presence of attributes"""
+        train_object = train.trainBase()
+        self.assertTrue(hasattr(train_object, 'model'))
+        self.assertTrue(hasattr(train_object, 'build_model'))
+        self.assertTrue(hasattr(train_object, 'iterate_minibatches'))
+        self.assertTrue(hasattr(train_object, 'train'))
+        self.assertTrue(hasattr(train_object, 'predict'))
+        self.assertTrue(hasattr(train_object, 'save_params'))
+        self.assertTrue(hasattr(train_object, 'load_params'))
 
