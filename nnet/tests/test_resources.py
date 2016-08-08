@@ -37,7 +37,15 @@ class TestResources(unittest.TestCase):
     """Test the resources"""
 
     def setUp(self):
-        self.train_data = resources.load_training_data()
+        self.train_data_extract_landmarks = pandas.DataFrame({
+            'left_eye_center_x': pandas.Series([1, 1]),
+            'left_eye_center_y': pandas.Series([2, 2]),
+            'left_eye_inner_corner_x': pandas.Series([3, 3]),
+            'right_eye_center_x': pandas.Series([4, 4]),
+            'right_eye_center_y': pandas.Series([5, 5]),
+            'Image': pandas.Series(["255 255 255 255", "255 255 255 255"]),
+        })
+
 
     def test_resources_path(self):
         """Test the correct resources path """
@@ -52,7 +60,7 @@ class TestResources(unittest.TestCase):
 
     def test_load_training_data(self):
         """Load the training set"""
-        train_data = self.train_data
+        train_data = resources.load_training_data()
         # Check the default number of training samples
         self.assertEqual(train_data.shape[0], 7049, 'incorrect number of training samples %d != %d' %
                 (train_data.shape[0], 7049))
@@ -69,18 +77,65 @@ class TestResources(unittest.TestCase):
         self.assertLess(selected_data.shape[0], train_data.shape[0])
         self.assertEqual(selected_data.shape[1], 2)
 
-    def test_image_landmark_extraction(self):
+    def test_image_landmark_extraction_shape(self):
         """Extract landmarks and images"""
-        train_data = self.train_data
+        #train_data = self.train_data
+        train_data = self.train_data_extract_landmarks
         x, y = resources.extract_image_landmarks(train_data)
         self.assertEqual(len(x),len(y))
-        self.assertEqual(x.shape[1], 96 ** 2)
-        self.assertEqual(y.shape[1], 30)
+        self.assertEqual(x.shape[1], 4)
+        self.assertEqual(y.shape[1], 5)
+
+    def test_image_landmark_extraction_x(self):
+        """Test image extraction of extract_image_landmarks"""
+        train_data = self.train_data_extract_landmarks
+        x, y = resources.extract_image_landmarks(train_data)
+        np.testing.assert_allclose(x[0], [0, 0, 0, 0])
+       
+    def test_image_landmark_extraction_y_0(self):
+        """Test landmark extraction of extract_image_landmarks 0"""
+        train_data = self.train_data_extract_landmarks
+        x, y = resources.extract_image_landmarks(train_data)
+        np.testing.assert_approx_equal(y[0, 0], np.float32((1 - 48) / 48))
+
+    def test_image_landmark_extraction_y_1(self):
+        """Test landmark extraction of extract_image_landmarks 1"""
+        train_data = self.train_data_extract_landmarks
+        x, y = resources.extract_image_landmarks(train_data)
+        np.testing.assert_approx_equal(y[0, 1], np.float32((2 - 48) / 48))
+
+    def test_image_landmark_extraction_y_2(self):
+        """Test landmark extraction of extract_image_landmarks 2"""
+        train_data = self.train_data_extract_landmarks
+        x, y = resources.extract_image_landmarks(train_data)
+        np.testing.assert_approx_equal(y[0, 2], np.float32((3 - 48) / 48))
+
+    def test_image_landmark_extraction_y_3(self):
+        """Test landmark extraction of extract_image_landmarks 3"""
+        train_data = self.train_data_extract_landmarks
+        x, y = resources.extract_image_landmarks(train_data)
+        np.testing.assert_approx_equal(y[0, 3], np.float32((4 - 48) / 48))
+
+    def test_image_landmark_extraction_y_4(self):
+        """Test landmark extraction of extract_image_landmarks 4"""
+        train_data = self.train_data_extract_landmarks
+        x, y = resources.extract_image_landmarks(train_data)
+        np.testing.assert_approx_equal(y[0, 4], np.float32((5 - 48) / 48))
+
 
     #@unittest.skip("demonstrating skipping")
     def test_splitting_training_data(self):
         """Test default train / valid set split"""
-        train_data = resources.remove_incomplete_data(self.train_data)
+        train_data = pandas.DataFrame({
+            'left_eye_center_x': pandas.Series([1] * 10),
+            'left_eye_center_y': pandas.Series([2] * 10),
+            'left_eye_inner_corner_x': pandas.Series([3] * 10),
+            'right_eye_center_x': pandas.Series([4] * 10),
+            'right_eye_center_y': pandas.Series([5] * 10),
+            'Image': pandas.Series(["255 255 255 255"] * 10),
+        })
+
+
         x, y = resources.extract_image_landmarks(train_data)
 
         for split_ratio in [0.5, 0.7]:
@@ -97,5 +152,5 @@ class TestResources(unittest.TestCase):
                 self.assertEqual(split_ratio_calculated, split_ratio,
                     'incorrect split ratio: %0.2f' % split_ratio_calculated) 
                 # Check the shape of the features
-                self.assertEqual(x_train.shape[1], 96 ** 2)
-                self.assertEqual(y_train.shape[1], 30)
+                self.assertEqual(x_train.shape[1], 4)
+                self.assertEqual(y_train.shape[1], 5)

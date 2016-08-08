@@ -61,31 +61,31 @@ def remove_incomplete_data(data):
 
 def extract_image_landmarks(data_in):
 
-    complete_data = pandas.DataFrame.copy(data_in)
-
     # Convert the images
-    complete_data['Image'] = \
-            complete_data['Image'].apply(
+    data_in['Image'] = \
+            data_in['Image'].apply(
             lambda im: np.fromstring(im, sep=' '))
 
     # Extract the images
     # Scale the images
-    x = np.vstack(complete_data['Image'].values) / 255.
+    x = np.vstack(data_in['Image'].values) / 255.
 
     # Centre to the mean
     x -= np.mean(x, axis=1).reshape((x.shape[0], -1))
     x -= np.mean(x, axis=0)
 
     x = x.astype(np.float32)
+
     # Extract the labels
-    y = complete_data[complete_data.columns[:-1]].values
+    labels = data_in.columns.tolist()
+    labels.pop(labels.index('Image'))
+    y = data_in[labels].values
 
     y = (y - 48) / 48 # Scale between -1 and 1
 
     y = y.astype(np.float32)
 
     return x, y
-
 
 
 def split_training_data(x, y, split_ratio=0.7):
