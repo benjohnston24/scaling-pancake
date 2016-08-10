@@ -81,16 +81,38 @@ class TestTrainClass(unittest.TestCase):
         """Test the shape of the layers in the network"""
         train_object = train.trainBase()
         train_object.model()
-        current_layer = train_object.network
 
         # Check shapes
-        self.assertEqual(train_object.layers[0].shape, 
+        # Output layer
+        self.assertEqual(train_object.network.num_units, 30,
+                         "Incorrect number of output layer units")
+        # Hidden layer
+        self.assertEqual(train_object.network.input_layer.num_units, 500,
+                         "Incorrect number of hidden layer units")
+
+        # Input layer
+        self.assertEqual(train_object.network.input_layer.input_layer.shape,
                          (None, train.DEFAULT_IMAGE_SIZE),
                          "Incorrect input layer shape")
-        self.assertEqual(train_object.layers[1].num_units, 500,
-                         "Incorrect number of hidden layer units")
-        self.assertEqual(train_object.layers[2].num_units, 30,
-                         "Incorrect number of output layer units")
+
+    def test_generate_layer_list_w_network(self):
+        """Test the construction of the layer list if the network is defined"""
+        train_object = train.trainBase()
+        train_object.model()
+        train_object._generate_layer_list()
+
+        # Check the layers are correctly mapped
+        current_layer = train_object.network
+        layer_count = len(train_object.layers)
+        while hasattr(current_layer, 'input_layer'):
+            with self.subTest(layer_count=layer_count):
+                self.assertEqual(train_object.layers[layer_count - 1],
+                                 current_layer,
+                                 "{} layer != {} layer".format(train_object.layers[layer_count - 1].name,
+                                                               current_layer.name)
+                                 )
+            current_layer = current_layer.input_layer
+            layer_count -= 1
 
     def test_build_model_training_loss_function(self):
         """Test the correct construction of the training loss function - type(theano.function)"""
@@ -123,9 +145,9 @@ class TestTrainClass(unittest.TestCase):
         random.seed(int(time.time()))
 
         # Produce a random number of samples between 1000 and 2000
-        random_samples = random.randint(1000, 2000) 
-        inputs = np.ones((random_samples,train.DEFAULT_IMAGE_SIZE)) 
-        targets = np.ones((random_samples,30)) 
+        random_samples = random.randint(1000, 2000)
+        inputs = np.ones((random_samples, train.DEFAULT_IMAGE_SIZE))
+        targets = np.ones((random_samples, 30))
 
         # Produce a random batch size
         random_batch = random.randint(100, 200)
@@ -145,10 +167,10 @@ class TestTrainClass(unittest.TestCase):
         random.seed(int(time.time()))
 
         # Produce a random number of samples between 1000 and 2000
-        random_samples = random.randint(100, 200) 
-        inputs = np.ones((random_samples,train.DEFAULT_IMAGE_SIZE)) 
-        inputs[:,0] = np.int_(np.linspace(0, len(inputs), len(inputs)))
-        targets = np.ones((random_samples,30)) 
+        random_samples = random.randint(100, 200)
+        inputs = np.ones((random_samples, train.DEFAULT_IMAGE_SIZE))
+        inputs[:, 0] = np.int_(np.linspace(0, len(inputs), len(inputs)))
+        targets = np.ones((random_samples, 30))
 
         # Produce a random batch size
         random_batch = random.randint(10, 20)
@@ -160,6 +182,10 @@ class TestTrainClass(unittest.TestCase):
             non_shuffled_idx = np.int_(np.linspace(batch_counter, batch_counter + len(samp), len(samp)))
             with self.subTest(batch_counter=batch_counter):
                 self.assertTrue(
-                        np.any(np.not_equal(samp[:,0], non_shuffled_idx)), 
-                        "no minibatch shuffling") 
+                        np.any(np.not_equal(samp[:, 0], non_shuffled_idx)),
+                        "no minibatch shuffling")
             batch_counter += len(samp)
+
+    @unittest.skip("Test training in integration tests")
+    def test_train(self):
+        pass

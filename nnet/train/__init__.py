@@ -33,20 +33,22 @@ DEFAULT_IMAGE_SIZE = 96 ** 2
 
 class trainBase(object):
 
-    def __init__(self, 
+    def __init__(self,
                  input_var=None,
                  output_var=None,
                  learning_rate=adaptiverates.fixedRate(0.01),
                  objective=squared_error,
                  updates=nesterov_momentum,
-                 #momentum=0.9,  # TODO: Update later to be variable
+                 # momentum=0.9,  # TODO: Update later to be variable
+                 patience=500,
                  ):
-        self.input_var = input_var 
-        self.output_var = output_var 
+        self.input_var = input_var
+        self.output_var = output_var
         self.objective = objective
         self.updates = updates
         self.learning_rate = learning_rate
         self.learning_rate_tensor = theano.tensor.scalar(dtype='float32')
+        self.patience = patience
 
     def model(self):
         """
@@ -68,7 +70,7 @@ class trainBase(object):
         None
 
         """
-        
+
         # Initialise input / output tensors
         self.input_var = theano.tensor.matrix('x')
         self.output_var = theano.tensor.vector('y')
@@ -92,15 +94,23 @@ class trainBase(object):
                 )
 
         self.network = output_layer
-        self.layers = [
-                input_layer,
-                hidden_layer,
-                output_layer,
-                ]
+
+    def _generate_layer_list(self):
+
+        # Only execute if self.network is defined
+        self.layers = []
+        current_layer = self.network
+        while hasattr(current_layer, 'input_layer'):
+            self.layers.insert(0, current_layer)
+            current_layer = current_layer.input_layer
+
+        # Add the first input layer
+        self.layers.insert(0, current_layer)
 
     def build_model(self):
         # Define the model prior to building it
         self.model()
+        self._generate_layer_list()
 
         # Training loss
         train_prediction = get_output(self.network)
@@ -108,7 +118,7 @@ class trainBase(object):
 
         # Validation loss
         validation_prediction = get_output(self.network, deterministic=True)
-        validation_loss = aggregate(self.objective(validation_prediction, self.output_var)) 
+        validation_loss = aggregate(self.objective(validation_prediction, self.output_var))
 
         # Update the parameters
         params = get_all_params(self.network, trainable=True)
