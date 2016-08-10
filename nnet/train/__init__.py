@@ -1,45 +1,59 @@
 #! /usr/bin/env python
-"""!
------------------------------------------------------------------------------
-File Name: __init__.py
+# -*- coding: utf-8 -*-
+# S.D.G
 
-Purpose:
-
-Created: 04-Aug-2016 23:30:01 AEST
------------------------------------------------------------------------------
-Revision History
-
-
-
------------------------------------------------------------------------------
-S.D.G
 """
+Network training functionality
+"""
+
+# Imports
+from . import adaptiverates
+import theano
+from lasagne.layers import InputLayer, DenseLayer
+
 __author__ = 'Ben Johnston'
 __revision__ = '0.1'
 __date__ = '04-Aug-2016 23:30:01 AEST'
 __license__ = 'MPL v2.0'
-
-# LICENSE DETAILS############################################################
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# IMPORTS#####################################################################
-from . import adaptiverates
-##############################################################################
 
 __all__ = [
         "adaptiverates",
         "trainBase",
         ]
 
+DEFAULT_IMAGE_SIZE = 96 ** 2
+
+
 class trainBase(object):
 
     def __init__(self):
-        pass
+        self.input_var = None
+        self.output_var = None
 
     def model(self):
-        pass
+        # Initialise input / output tensors
+        self.input_var = theano.tensor.matrix('x')
+        self.output_var = theano.tensor.vector('y')
+
+        input_layer = InputLayer(
+                input_var=self.input_var,
+                shape=(None, DEFAULT_IMAGE_SIZE),
+                name='input',
+                )
+
+        hidden_layer = DenseLayer(
+                input_layer,
+                num_units=500,
+                name='hidden',
+                )
+
+        output_layer = DenseLayer(
+                hidden_layer,
+                num_units=30,
+                name='output'
+                )
+
+        self.network = output_layer
 
     def build_model(self):
         pass
@@ -56,5 +70,5 @@ class trainBase(object):
     def save_params(self):
         pass
 
-    def load_params(self): 
+    def load_params(self):
         pass

@@ -1,33 +1,22 @@
 #! /usr/bin/env python
-"""!
------------------------------------------------------------------------------
-File Name : test_train.py
+# -*- coding: utf-8 -*-
+# S.D.G
 
-Purpose:
-
-Created: 04-Aug-2016 23:25:33 AEST
------------------------------------------------------------------------------
-Revision History
-
-
-
------------------------------------------------------------------------------
-S.D.G
 """
+Test the training module of the package
+"""
+
+# Imports
+import unittest
+import nnet.train as train
+import theano
+import lasagne
+
 __author__ = 'Ben Johnston'
 __revision__ = '0.1'
 __date__ = '04-Aug-2016 23:25:33 AEST'
 __license__ = 'MPL v2.0'
 
-# LICENSE DETAILS############################################################
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# IMPORTS#####################################################################
-import unittest
-import nnet.train as train
-##############################################################################
 
 class TestRates(unittest.TestCase):
     """Test the adaptive rates"""
@@ -37,16 +26,16 @@ class TestRates(unittest.TestCase):
         rate = train.adaptiverates.fixedRate(0.2)
         self.assertEqual(rate(), 0.2)
 
-
     def test_linear_rate(self):
         """Test linear rate learning rate"""
         rate = train.adaptiverates.linearRate(start=10, end=1, epochs=10)
         rate_check = 10
 
         for step in rate:
-            with self.subTest(rate_check = rate_check):
+            with self.subTest(rate_check=rate_check):
                 # Assert the same linear rate
                 self.assertEqual(step, rate_check, "linear rate error {} != {}".format(step, rate_check))
+
 
 class TestTrainClass(unittest.TestCase):
     """Test the training base class"""
@@ -54,11 +43,33 @@ class TestTrainClass(unittest.TestCase):
     def test_attributes(self):
         """Test presence of attributes"""
         train_object = train.trainBase()
-        self.assertTrue(hasattr(train_object, 'model'))
-        self.assertTrue(hasattr(train_object, 'build_model'))
-        self.assertTrue(hasattr(train_object, 'iterate_minibatches'))
-        self.assertTrue(hasattr(train_object, 'train'))
-        self.assertTrue(hasattr(train_object, 'predict'))
-        self.assertTrue(hasattr(train_object, 'save_params'))
-        self.assertTrue(hasattr(train_object, 'load_params'))
+        attributes = [
+                'model',
+                'build_model',
+                'iterate_minibatches',
+                'train',
+                'predict',
+                'save_params',
+                'load_params',
+                ]
+        for attr in attributes:
+            with self.subTest(attr=attr):
+                self.assertTrue(hasattr(train_object, attr), "trainBase missing {} attribute".format(attr))
 
+    def test_model_input_output(self):
+        """Test the default model input tensor is of the correct type"""
+        train_object = train.trainBase()
+        train_object.model()
+        self.assertIsInstance(train_object.input_var, type(theano.tensor.matrix('x')))
+        self.assertIsInstance(train_object.output_var, type(theano.tensor.vector('y')))
+
+    def test_model_default_architecture(self):
+        """Test the default model architecture is a simple single layer neural network"""
+        train_object = train.trainBase()
+        train_object.model()
+        # Check number of layers should be 3 in total, input, hidden and output
+        current_layer = train_object.network
+        layer_count = 0
+        while hasattr(current_layer, 'input_layer', False):
+            layer_count += 1
+        self.assertEqual(layer_count, 3, "Incorrect number of layers in default nnet")

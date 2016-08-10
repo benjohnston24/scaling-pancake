@@ -1,43 +1,31 @@
 #! /usr/bin/env python
-"""!
------------------------------------------------------------------------------
-File Name: __init__.py
+# -*- coding: utf-8 -*-
+# S.D.G
 
-Purpose:
-
-Created: 04-Aug-2016 16:28:02 AEST
------------------------------------------------------------------------------
-Revision History
-
-
-
------------------------------------------------------------------------------
-S.D.G
 """
-__author__ = 'Ben Johnston'
-__revision__ = '0.1'
-__date__ = '04-Aug-2016 16:28:02 AEST'
-__license__ = 'MPL v2.0'
+Resources module for the package
+"""
 
-# LICENSE DETAILS############################################################
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# IMPORTS#####################################################################
+# Imports
 import os
 import pandas
 from sklearn.cross_validation import train_test_split
 import time
 import numpy as np
-##############################################################################
-RESOURCE_DIR =  os.path.dirname(__file__)
-DEFAULT_TRAIN_SET = os.path.join(RESOURCE_DIR,'training.csv') 
+
+__author__ = 'Ben Johnston'
+__revision__ = '0.1'
+__date__ = '04-Aug-2016 16:28:02 AEST'
+__license__ = 'MPL v2.0'
+
+RESOURCE_DIR = os.path.dirname(__file__)
+DEFAULT_TRAIN_SET = os.path.join(RESOURCE_DIR, 'training.csv')
 
 __all__ = [
-        "RESOURCE_DIR", 
+        "RESOURCE_DIR",
         "load_training_data"
         ]
+
 
 def load_training_data(filename=DEFAULT_TRAIN_SET):
     """Load the training set
@@ -50,14 +38,16 @@ def load_training_data(filename=DEFAULT_TRAIN_SET):
     Returns
     ------------
 
-    an array containing the data 
+    an array containing the data
     """
 
     data = pandas.read_csv(filename)
     return data
 
+
 def remove_incomplete_data(data):
-    return data.dropna() 
+    return data.dropna()
+
 
 def extract_image_landmarks(data_in):
 
@@ -81,7 +71,7 @@ def extract_image_landmarks(data_in):
     labels.pop(labels.index('Image'))
     y = data_in[labels].values
 
-    y = (y - 48) / 48 # Scale between -1 and 1
+    y = (y - 48) / 48  # Scale between -1 and 1
 
     y = y.astype(np.float32)
 
@@ -90,10 +80,9 @@ def extract_image_landmarks(data_in):
 
 def split_training_data(x, y, split_ratio=0.7):
 
-
     x_train, x_valid, y_train, y_valid = \
-        train_test_split(x, y, 
-                         train_size=split_ratio, 
+        train_test_split(x, y,
+                         train_size=split_ratio,
                          random_state=int(time.time()))
 
-    return x_train, y_train, x_valid, y_valid 
+    return x_train, y_train, x_valid, y_valid

@@ -1,36 +1,24 @@
 #! /usr/bin/env python
-"""!
------------------------------------------------------------------------------
-File Name: test_resources.py
+# -*- coding: utf-8 -*-
+# S.D.G
 
-Purpose: Test the resources components of the package
-
-Created: 04-Aug-2016 14:34:55 AEST
------------------------------------------------------------------------------
-Revision History
-
-
------------------------------------------------------------------------------
-S.D.G
 """
+Test the resources module of the package
+"""
+
+# Imports
+import unittest
+import nnet.resources as resources
+import os
+import pandas
+import numpy as np
+from collections import OrderedDict
+
 __author__ = 'Ben Johnston'
 __revision__ = '0.1'
 __date__ = '04-Aug-2016 14:34:55 AEST'
 __license__ = 'MPL v2.0'
 
-# LICENSE DETAILS############################################################
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# IMPORTS#####################################################################
-import unittest
-import nnet.resources as resources 
-import os
-import pandas
-import numpy as np
-from collections import OrderedDict
-##############################################################################
 
 class TestResources(unittest.TestCase):
     """Test the resources"""
@@ -45,12 +33,11 @@ class TestResources(unittest.TestCase):
             'Image': pandas.Series(["255 255 255 255", "255 255 255 255"]),
         })
 
-
     def test_resources_path(self):
         """Test the correct resources path """
         # Check the path is correct
-        self.assertEqual(os.path.relpath(resources.RESOURCE_DIR, __file__), 
-                '../../resources') 
+        self.assertEqual(os.path.relpath(resources.RESOURCE_DIR, __file__),
+                         '../../resources')
 
     def test_training_set_filename(self):
         """Test the training set filename"""
@@ -62,9 +49,9 @@ class TestResources(unittest.TestCase):
         train_data = resources.load_training_data()
         # Check the default number of training samples
         self.assertEqual(train_data.shape[0], 7049, 'incorrect number of training samples %d != %d' %
-                (train_data.shape[0], 7049))
+                         (train_data.shape[0], 7049))
         self.assertEqual(train_data.shape[1], 31, 'incorrect number of training features %d != %d' %
-                (train_data.shape[1], 31))
+                         (train_data.shape[1], 31))
 
     def test_remove_incomplete(self):
         """Remove incomplete data"""
@@ -78,10 +65,9 @@ class TestResources(unittest.TestCase):
 
     def test_image_landmark_extraction_shape(self):
         """Extract landmarks and images"""
-        #train_data = self.train_data
         train_data = self.train_data_extract_landmarks
         x, y = resources.extract_image_landmarks(train_data)
-        self.assertEqual(len(x),len(y))
+        self.assertEqual(len(x), len(y))
         self.assertEqual(x.shape[1], 4)
         self.assertEqual(y.shape[1], 5)
 
@@ -90,7 +76,7 @@ class TestResources(unittest.TestCase):
         train_data = self.train_data_extract_landmarks
         x, y = resources.extract_image_landmarks(train_data)
         np.testing.assert_allclose(x[0], [0, 0, 0, 0])
-       
+
     def test_image_landmark_extraction_y_0(self):
         """Test landmark extraction of extract_image_landmarks 0"""
         train_data = self.train_data_extract_landmarks
@@ -121,8 +107,6 @@ class TestResources(unittest.TestCase):
         x, y = resources.extract_image_landmarks(train_data)
         np.testing.assert_approx_equal(y[0, 4], np.float32((5 - 48) / 48))
 
-
-    #@unittest.skip("demonstrating skipping")
     def test_splitting_training_data(self):
         """Test default train / valid set split"""
         train_data = pandas.DataFrame({
@@ -134,7 +118,6 @@ class TestResources(unittest.TestCase):
             'Image': pandas.Series(["255 255 255 255"] * 10),
         })
 
-
         x, y = resources.extract_image_landmarks(train_data)
 
         for split_ratio in [0.5, 0.7]:
@@ -144,12 +127,12 @@ class TestResources(unittest.TestCase):
             with self.subTest(split_ratio=split_ratio):
                 # Check equal lengths
                 self.assertEqual(len(x_train), len(y_train), 'x and y train dataset lengths not equal: %d != %d' %
-                        (len(x_train), len(y_train)))
+                                 (len(x_train), len(y_train)))
                 self.assertEqual(len(x_valid), len(y_valid), 'x and y valid dataset lengths not equal: %d != %d' %
-                        (len(x_valid), len(y_valid)))
+                                 (len(x_valid), len(y_valid)))
                 # Check the correct ratios
                 self.assertEqual(split_ratio_calculated, split_ratio,
-                    'incorrect split ratio: %0.2f' % split_ratio_calculated) 
+                                 'incorrect split ratio: %0.2f' % split_ratio_calculated)
                 # Check the shape of the features
                 self.assertEqual(x_train.shape[1], 4)
                 self.assertEqual(y_train.shape[1], 5)
