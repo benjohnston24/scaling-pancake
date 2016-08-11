@@ -23,8 +23,16 @@ DEFAULT_TRAIN_SET = os.path.join(RESOURCE_DIR, 'training.csv')
 
 __all__ = [
         "RESOURCE_DIR",
+        "DEFAULT_TRAIN_SET",
         "load_training_data"
+        "remove_incomplete_data",
+        "extract_image_landmarks",
+        "split_training_data",
+        "load_data",
         ]
+
+
+
 
 
 def load_training_data(filename=DEFAULT_TRAIN_SET):
@@ -38,7 +46,7 @@ def load_training_data(filename=DEFAULT_TRAIN_SET):
     Returns
     ------------
 
-    an array containing the data
+    a pandas DataFrame containing the data
     """
 
     data = pandas.read_csv(filename)
@@ -86,3 +94,28 @@ def split_training_data(x, y, split_ratio=0.7):
                          random_state=int(time.time()))
 
     return x_train, y_train, x_valid, y_valid
+
+
+def load_data(filename=DEFAULT_TRAIN_SET, dropna=True, split_ratio=0.7):
+    """Load the training set, extract features and split into training and validation groups
+
+    Parameters
+    ------------
+
+    filename : (optional) the filename of the data set to load, default set to nnet.resources.DEFAULT_TRAIN_SET
+    dropna   : (optional) remove samples with incomplete data from the original data set.  Set to True by default, det
+               to False to keep all data
+    split_ratio : (optional) the train / validation ratio for the data set.  0.7 by default (70% of the data is used for
+                  the training set)
+
+    Returns
+    ------------
+
+    a list of np.arrays containing the training and validation sets
+    [train_in, train_targets, valid_in, valid_targets]
+    """
+    data = load_training_data()
+    if dropna:
+        data = remove_incomplete_data(data)
+    x, y = extract_image_landmarks(data)
+    return split_training_data(x, y, split_ratio=split_ratio)

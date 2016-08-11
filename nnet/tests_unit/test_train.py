@@ -10,6 +10,7 @@ Test the training module of the package
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
 import nnet.train as train
+from nnet.tests_unit.test_resources import assert_data_division 
 import theano
 import lasagne
 import numpy as np
@@ -67,6 +68,17 @@ class TestTrainClass(unittest.TestCase):
         for attr in attributes:
             with self.subTest(attr=attr):
                 self.assertTrue(hasattr(train_object, attr), "trainBase missing {} attribute".format(attr))
+
+    def test_load_data(self):
+        """Test loading the default data"""
+        train_object = train.trainBase()
+        train_object.load_data()
+
+        split_ratio_calculated = np.round(len(train_object.x_train) / 
+                                          (len(train_object.x_train) + len(train_object.x_valid)), 1)
+        assert_data_division(self, train_object.x_train, train_object.y_train, 
+                             train_object.x_valid, train_object.y_valid, 
+                             0.7, split_ratio_calculated)
 
     def test_model_input_output(self):
         """Test the default model input tensor is of the correct type"""

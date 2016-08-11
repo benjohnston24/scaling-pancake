@@ -51,5 +51,5 @@ class linearRate(object):
 
     def __iter__(self):
         for rate in self.rates:
-            self.rate = self.rates.pop(0) 
+            self.rate = self.rates.pop(0)
             yield self.rate

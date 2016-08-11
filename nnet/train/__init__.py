@@ -8,6 +8,7 @@ Network training functionality
 
 # Imports
 from . import adaptiverates
+import nnet.resources as resources
 import theano
 from lasagne.layers import InputLayer, DenseLayer, get_output, \
         get_all_params
@@ -72,6 +73,11 @@ class trainBase(object):
 
         # Prepare the log file
         self._prepare_log()
+
+    def load_data(self, filename=resources.DEFAULT_TRAIN_SET, split_ratio=0.7):
+        # Load the training data
+        self.x_train, self.y_train, self.x_valid, self.y_valid = \
+                resources.load_data(filename=filename, split_ratio=split_ratio)
 
     def model(self):
         """
@@ -165,7 +171,7 @@ class trainBase(object):
                 loss_or_grads=train_loss,
                 params=params,
                 learning_rate=self.learning_rate_tensor,
-                momentum=self.momentum_tensor, 
+                momentum=self.momentum_tensor,
                 )
 
         # Print the learning rate type
@@ -211,7 +217,7 @@ class trainBase(object):
     def train(self):
 
         # If not already done, build the model
-        if not hasattr(self,'predict'):
+        if not hasattr(self, 'predict'):
             self.build_model()
 
         self.log_msg("Batch Size: %s" % self.batch_size)
@@ -220,8 +226,15 @@ class trainBase(object):
         # Print the header
         self.log_msg(LINE)
         self.log_msg(
-                "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".format("Epoch", "Train Error",
-                "Valid Error", "Valid / Train Error", "Time", "Best Error", "Learning Rate"))
+                     "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".
+                     format("Epoch",
+                            "Train Error",
+                            "Valid Error",
+                            "Valid / Train Error",
+                            "Time",
+                            "Best Error",
+                            "Learning Rate")
+                     )
         self.log_msg(LINE)
 
         prev_weights = None
@@ -241,15 +254,15 @@ class trainBase(object):
 
             self.y_train_err_history.append(train_err)
 
-            #valid_err = 0
-            #valid_batches = 0
-            #for batch in self.iterate_minibatches(self.x_valid, self.y_valid,
+            # valid_err = 0
+            # valid_batches = 0
+            # for batch in self.iterate_minibatches(self.x_valid, self.y_valid,
             #        self.batch_size, shuffle=True):
             #    inputs, targets = batch
             #    err  = self.valid_loss(inputs.reshape(-1, 1, self.image_size, self.image_size), targets)
             #    valid_err += err
             #    valid_batches += 1
-            #valid_err /= valid_batches
+            # valid_err /= valid_batches
             valid_err = self.valid_loss(x_valid, y_valid)
 
             self.y_valid_err_history.append(valid_err)
@@ -260,7 +273,7 @@ class trainBase(object):
             if valid_err < self.best_valid_err:
                 self.best_epoch = i
                 self.best_valid_err = valid_err
-                self.best_weights = lasagne.layers.get_all_param_values(self.network) 
+                self.best_weights = lasagne.layers.get_all_param_values(self.network)
                 curr_learning_rate *= 1 + (1 - self.learning_adjustment)
                 improvement = '*'
             else:
@@ -274,18 +287,19 @@ class trainBase(object):
             if (i - self.best_epoch) > self.patience:
                 self.log_msg("Early Stopping")
                 self.log_msg("Best validation error: %0.6f at epoch %d" %
-                        (self.best_valid_err, self.best_epoch))
+                             (self.best_valid_err, self.best_epoch))
                 break
 
             self.log_msg(
-                    "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".format(
-                    i, 
-                    "%0.6f" % np.cast['float32'](train_err), 
-                    "%0.6f" % np.cast['float32'](valid_err), 
-                    "%0.6f" % (np.cast['float32'](valid_err) / np.cast['float32'](train_err)), 
-                    "%0.6f" % (time.time() - start_time), 
-                    improvement,
-                    "%0.6E" % self.learning_rate.get_value())) 
+                         "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".
+                         format(i,
+                                "%0.6f" % np.cast['float32'](train_err),
+                                "%0.6f" % np.cast['float32'](valid_err),
+                                "%0.6f" % (np.cast['float32'](valid_err) / np.cast['float32'](train_err)),
+                                "%0.6f" % (time.time() - start_time),
+                                improvement,
+                                "%0.6E" % self.learning_rate.get_value())
+                         )
 
     def save_progress(self):
         save_data = {
@@ -297,7 +311,7 @@ class trainBase(object):
                 'y_valid_err_history': self.y_valid_err_history,
             }
         with open(self.save_params_filename, "wb") as f:
-           pickle.dump(save_data, f)
+            pickle.dump(save_data, f)
 
     def load_progress(self):
         with open(filename, "rb") as f:
@@ -314,25 +328,21 @@ class trainBase(object):
     def _prepare_log(self):
         # Data logging
         # If the log already exists append a .x to the end of the file
-        self.log_extension = DEFAULT_LOG_EXTENSION 
-        self.save_params_extension = DEFAULT_PKL_EXTENSION 
+        self.log_extension = DEFAULT_LOG_EXTENSION
+        self.save_params_extension = DEFAULT_PKL_EXTENSION
         log_basename = self.name
-        #log_basename = "%s-%d" % (log_name, hidden_units)
+        # log_basename = "%s-%d" % (log_name, hidden_units)
         if os.path.exists("{}{}".format(log_basename, self.log_extension)):
             # See if any other logs exist of the .x format
             log_iter = 0
-            while os.path.exists("{}{}.{}".format(log_basename,
-                self.log_extension, log_iter)):
+            while os.path.exists("{}{}.{}".format(log_basename, self.log_extension, log_iter)):
                 log_iter += 1
 
-            self.log_filename = "{}{}.{}".format(log_basename,
-                    self.log_extension, log_iter)
-            self.save_params_filename = "{}{}.{}".format(log_basename,
-                    self.save_params_extension, log_iter)
+            self.log_filename = "{}{}.{}".format(log_basename, self.log_extension, log_iter)
+            self.save_params_filename = "{}{}.{}".format(log_basename, self.save_params_extension, log_iter)
         else:
             self.log_filename = log_basename + self.log_extension
-            self.save_params_filename = log_basename + \
-                                        self.save_params_extension
+            self.save_params_filename = log_basename + self.save_params_extension
 
     def log_msg(self, msg):
         if self.verbose:

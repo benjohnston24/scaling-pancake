@@ -19,6 +19,16 @@ __revision__ = '0.1'
 __date__ = '04-Aug-2016 14:34:55 AEST'
 __license__ = 'MPL v2.0'
 
+def assert_data_division(utest_obj, x_train, y_train, x_valid, y_valid, split_ratio, split_ratio_calculated):
+    # Check equal lengths
+    utest_obj.assertEqual(len(x_train), len(y_train), 'x and y train dataset lengths not equal: %d != %d' %
+                          (len(x_train), len(y_train)))
+    utest_obj.assertEqual(len(x_valid), len(y_valid), 'x and y valid dataset lengths not equal: %d != %d' %
+                          (len(x_valid), len(y_valid)))
+    # Check the correct ratios
+    utest_obj.assertEqual(split_ratio_calculated, split_ratio,
+                         'incorrect split ratio: %0.2f' % split_ratio_calculated)
+
 
 class TestResources(unittest.TestCase):
     """Test the resources"""
@@ -52,6 +62,15 @@ class TestResources(unittest.TestCase):
                          (train_data.shape[0], 7049))
         self.assertEqual(train_data.shape[1], 31, 'incorrect number of training features %d != %d' %
                          (train_data.shape[1], 31))
+
+    def test_load_data(self):
+        """Load the data set with landmarks extracted and training / validation sets split"""
+        train_data = resources.load_data()
+        self.assertEqual(len(train_data), 4)
+        self.assertEqual(train_data[0].shape[0], train_data[1].shape[0])
+        self.assertEqual(train_data[2].shape[0], train_data[3].shape[0])
+        self.assertEqual(train_data[0].shape[1], train_data[2].shape[1])
+        self.assertEqual(train_data[1].shape[1], train_data[3].shape[1])
 
     def test_remove_incomplete(self):
         """Remove incomplete data"""
@@ -107,6 +126,7 @@ class TestResources(unittest.TestCase):
         x, y = resources.extract_image_landmarks(train_data)
         np.testing.assert_approx_equal(y[0, 4], np.float32((5 - 48) / 48))
 
+
     def test_splitting_training_data(self):
         """Test default train / valid set split"""
         train_data = pandas.DataFrame({
@@ -125,14 +145,7 @@ class TestResources(unittest.TestCase):
                     resources.split_training_data(x, y, split_ratio=split_ratio)
             split_ratio_calculated = np.round(len(x_train) / (len(x_train) + len(x_valid)), 1)
             with self.subTest(split_ratio=split_ratio):
-                # Check equal lengths
-                self.assertEqual(len(x_train), len(y_train), 'x and y train dataset lengths not equal: %d != %d' %
-                                 (len(x_train), len(y_train)))
-                self.assertEqual(len(x_valid), len(y_valid), 'x and y valid dataset lengths not equal: %d != %d' %
-                                 (len(x_valid), len(y_valid)))
-                # Check the correct ratios
-                self.assertEqual(split_ratio_calculated, split_ratio,
-                                 'incorrect split ratio: %0.2f' % split_ratio_calculated)
+                assert_data_division(self, x_train, y_train, x_valid, y_valid, split_ratio, split_ratio_calculated)
                 # Check the shape of the features
                 self.assertEqual(x_train.shape[1], 4)
                 self.assertEqual(y_train.shape[1], 5)
