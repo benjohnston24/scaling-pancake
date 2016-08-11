@@ -8,6 +8,7 @@ Test the training module of the package
 
 # Imports
 import unittest
+from unittest.mock import MagicMock, patch, mock_open
 import nnet.train as train
 import theano
 import lasagne
@@ -37,11 +38,20 @@ class TestRates(unittest.TestCase):
         for step in rate:
             with self.subTest(rate_check=rate_check):
                 # Assert the same linear rate
-                self.assertEqual(step, rate_check, "linear rate error {} != {}".format(step, rate_check))
+                self.assertEqual(int(step), rate_check, "linear rate error {} != {}".format(step, rate_check))
+            rate_check -= 1
 
+log_file_mock_one_file = MagicMock(side_effect=[True, False])
+log_file_mock_two_files = MagicMock(side_effect=[True, True, False])
+save_params_mock = mock_open()
 
 class TestTrainClass(unittest.TestCase):
     """Test the training base class"""
+
+    def setUp(self):
+        self.model_str_template = "input (None, %i)\n" % train.DEFAULT_IMAGE_SIZE 
+        self.model_str_template += "hidden (None, 500)\n" 
+        self.model_str_template += "output (None, 30)" 
 
     def test_attributes(self):
         """Test presence of attributes"""
@@ -51,8 +61,8 @@ class TestTrainClass(unittest.TestCase):
                 'build_model',
                 'iterate_minibatches',
                 'train',
-                'save_params',
-                'load_params',
+                'save_progress',
+                'load_progress',
                 ]
         for attr in attributes:
             with self.subTest(attr=attr):
@@ -113,6 +123,23 @@ class TestTrainClass(unittest.TestCase):
                                  )
             current_layer = current_layer.input_layer
             layer_count -= 1
+
+    def test_model_to_str(self):
+        """Test the description of the model as a string"""
+        train_object = train.trainBase()
+        train_object.model()
+        train_object._generate_layer_list()
+
+        description = train_object.model_str()
+        self.assertEqual(description, self.model_str_template, "model string doesn't match template")
+
+    def test_model_to_str_no_layers(self):
+        """Test the description of the model as a string - autogenerate layer list"""
+        train_object = train.trainBase()
+        train_object.model()
+
+        description = train_object.model_str()
+        self.assertEqual(description, self.model_str_template, "model string doesn't match template")
 
     def test_build_model_training_loss_function(self):
         """Test the correct construction of the training loss function - type(theano.function)"""
@@ -186,6 +213,57 @@ class TestTrainClass(unittest.TestCase):
                         "no minibatch shuffling")
             batch_counter += len(samp)
 
+    @unittest.skip("")
+    def test_iterate_minibatches_assertion(self):
+        """Test ValueError is raised in minibatches when inputs and targets differ in length"""
+        train_object = train.trainBase()
+
+        with self.assertRaises(ValueError):
+            for batch in train_object.iterate_minibatches([1], [1, 1], 1, shuffle=True):
+                pass
+
+
     @unittest.skip("Test training in integration tests")
     def test_train(self):
         pass
+
+    @unittest.skip("Need to figure out how to mock open")
+    def test_save_progress(self):
+        """Test the correct data is pickled"""
+        train_object = train.trainBase()
+        train_object.save_progress()
+
+    @unittest.skip("Need to figure out how to mock open")
+    def test_load_progress(self):
+        """Test the correct data is being loaded from the pickle"""
+        train_object = train.trainBase()
+        train_object.save_progress()
+
+    def test_prepare_log(self):
+        """Check the log filenames are correctly established - no existing log exists"""
+        train_object = train.trainBase(name="test_prepare")
+
+        self.assertEqual(train_object.log_filename, "test_prepare.log", 
+                         "incorrect log filename")
+        self.assertEqual(train_object.save_params_filename, "test_prepare.pkl", 
+                         "incorrect pickle filename")
+
+    @patch('os.path.exists', log_file_mock_one_file)
+    def test_prepare_log_exists(self):
+        """Check the log filenames are correctly established - a log of the same name already exists"""
+        train_object = train.trainBase(name="test_prepare")
+
+        self.assertEqual(train_object.log_filename, "test_prepare.log.0", 
+                         "incorrect log filename")
+        self.assertEqual(train_object.save_params_filename, "test_prepare.pkl.0", 
+                         "incorrect pickle filename")
+
+    @patch('os.path.exists', log_file_mock_two_files)
+    def test_prepare_log_exists(self):
+        """Check the log filenames are correctly established - two logs of the same name already exist"""
+        train_object = train.trainBase(name="test_prepare")
+
+        self.assertEqual(train_object.log_filename, "test_prepare.log.1", 
+                         "incorrect log filename")
+        self.assertEqual(train_object.save_params_filename, "test_prepare.pkl.1", 
+                         "incorrect pickle filename")
