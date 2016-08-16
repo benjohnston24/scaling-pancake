@@ -11,12 +11,13 @@ from . import adaptiverates
 import nnet.resources as resources
 import theano
 from lasagne.layers import InputLayer, DenseLayer, get_output, \
-        get_all_params
+        get_all_params, get_all_param_values
 from lasagne.objectives import squared_error, aggregate
 from lasagne.updates import nesterov_momentum
 import numpy as np
 import os
 from six.moves import cPickle as pickle
+import time
 
 # Details of the script
 
@@ -34,6 +35,7 @@ __all__ = [
 DEFAULT_IMAGE_SIZE = 96 ** 2
 DEFAULT_LOG_EXTENSION = '.log'
 DEFAULT_PKL_EXTENSION = '.pkl'
+LINE = "-" * 156
 
 
 class trainBase(object):
@@ -49,6 +51,7 @@ class trainBase(object):
                  batch_size=128,
                  verbose=False,
                  name='trainBase',
+                 max_epochs = 1000,
                  ):
         self.input_var = input_var
         self.output_var = output_var
@@ -61,6 +64,8 @@ class trainBase(object):
         self.patience = patience
         self.name = name
         self.verbose = verbose
+        self.image_size = 96
+        self.max_epochs = max_epochs
 
         # Performance parameters
         self.best_weights = None
@@ -102,7 +107,7 @@ class trainBase(object):
 
         # Initialise input / output tensors
         self.input_var = theano.tensor.matrix('x')
-        self.output_var = theano.tensor.vector('y')
+        self.output_var = theano.tensor.matrix('y')
 
         input_layer = InputLayer(
                 input_var=self.input_var,
@@ -112,10 +117,9 @@ class trainBase(object):
 
         hidden_layer = DenseLayer(
                 input_layer,
-                num_units=500,
+                num_units=9600,
                 name='hidden',
                 )
-
         output_layer = DenseLayer(
                 hidden_layer,
                 num_units=30,
@@ -182,7 +186,7 @@ class trainBase(object):
         # Define training loss function
         self.train_loss = theano.function(
                 inputs=[self.input_var, self.output_var],
-                outputs=[train_loss],
+                outputs=train_loss,
                 updates=updates,
                 allow_input_downcast=True,
                 )
@@ -241,14 +245,15 @@ class trainBase(object):
         prev_train_err = np.inf
         self.best_valid_err = np.inf
 
-        for i in range(self.current_epoch, self.num_epochs):
+
+        for i in range(self.current_epoch, self.max_epochs):
             start_time = time.time()
 
             train_err = 0
             train_batches = 0
             for batch in self.iterate_minibatches(self.x_train, self.y_train, self.batch_size, shuffle=True):
                 inputs, targets = batch
-                train_err += self.train_loss(inputs.reshape(-1, 1, self.image_size, self.image_size), targets)
+                train_err += self.train_loss(inputs, targets)
                 train_batches += 1
             train_err /= train_batches
 
@@ -263,26 +268,27 @@ class trainBase(object):
             #    valid_err += err
             #    valid_batches += 1
             # valid_err /= valid_batches
-            valid_err = self.valid_loss(x_valid, y_valid)
+            valid_err = self.valid_loss(self.x_valid, self.y_valid)
 
             self.y_valid_err_history.append(valid_err)
-            curr_learning_rate = self.learning_rate.get_value()
+            curr_learning_rate = self.learning_rate_tensor.get_value()
 
             improvement = ' '
             # Check the validation error to see if it is time to exit
             if valid_err < self.best_valid_err:
                 self.best_epoch = i
                 self.best_valid_err = valid_err
-                self.best_weights = lasagne.layers.get_all_param_values(self.network)
-                curr_learning_rate *= 1 + (1 - self.learning_adjustment)
+                self.best_weights = get_all_param_values(self.network)
+                #curr_learning_rate *= 1 + (1 - self.learning_adjustment)
                 improvement = '*'
             else:
-                curr_learning_rate *= self.learning_adjustment
-                if curr_learning_rate < self.base_learning_rate:
-                    curr_learning_rate = self.base_learning_rate
+                #curr_learning_rate *= self.learning_adjustment
+                #if curr_learning_rate < self.base_learning_rate:
+                #    curr_learning_rate = self.base_learning_rate
+                pass
 
             curr_learning_rate = np.cast['float32'](curr_learning_rate)
-            self.learning_rate.set_value(np.float32(curr_learning_rate))
+            self.learning_rate_tensor.set_value(np.float32(curr_learning_rate))
 
             if (i - self.best_epoch) > self.patience:
                 self.log_msg("Early Stopping")
@@ -298,8 +304,9 @@ class trainBase(object):
                                 "%0.6f" % (np.cast['float32'](valid_err) / np.cast['float32'](train_err)),
                                 "%0.6f" % (time.time() - start_time),
                                 improvement,
-                                "%0.6E" % self.learning_rate.get_value())
+                                "%0.6E" % self.learning_rate_tensor.get_value())
                          )
+            i += 1
 
     def save_progress(self):
         save_data = {

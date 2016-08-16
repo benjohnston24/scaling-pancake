@@ -199,6 +199,22 @@ class TestTrainClass(unittest.TestCase):
 
         self.assertEqual(batch_counter, random_samples, "batch counter != size of target set")
 
+    def test_iterate_minibatches_one_sample(self):
+        """Test minibatches is able to handle a single sample only"""
+        train_object = train.trainBase()
+        inputs = np.ones((1, train.DEFAULT_IMAGE_SIZE))
+        targets = np.ones((1, 30))
+
+        random_batch = 128
+        
+        batch_counter = 0
+
+        for batch in train_object.iterate_minibatches(inputs, targets, random_batch, shuffle=False):
+            samp, tar = batch
+            batch_counter += len(samp)
+
+        self.assertEqual(batch_counter, 1, "batch counter != size of target set")
+
     def test_iterate_minibatches_shuffle(self):
         """Test the correct shuffling of data in minibatches"""
         train_object = train.trainBase()
@@ -225,15 +241,16 @@ class TestTrainClass(unittest.TestCase):
                         "no minibatch shuffling")
             batch_counter += len(samp)
 
-    @unittest.skip("")
     def test_iterate_minibatches_assertion(self):
         """Test ValueError is raised in minibatches when inputs and targets differ in length"""
         train_object = train.trainBase()
 
-        with self.assertRaises(ValueError):
-            for batch in train_object.iterate_minibatches([1], [1, 1], 1, shuffle=True):
-                pass
+        inputs = np.ones((10, train.DEFAULT_IMAGE_SIZE)) 
+        targets = np.ones((8, 30)) 
 
+        with self.assertRaises(ValueError):
+            for batch in train_object.iterate_minibatches(inputs, targets, 1, shuffle=True):
+                pass
 
     @unittest.skip("Test training in integration tests")
     def test_train(self):
