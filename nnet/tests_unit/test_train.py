@@ -16,6 +16,7 @@ import lasagne
 import numpy as np
 import random
 import time
+import os
 
 __author__ = 'Ben Johnston'
 __revision__ = '0.1'
@@ -44,7 +45,8 @@ class TestRates(unittest.TestCase):
 
 log_file_mock_one_file = MagicMock(side_effect=[True, False])
 log_file_mock_two_files = MagicMock(side_effect=[True, True, False])
-save_params_mock = mock_open()
+mock_pickle = MagicMock()
+mock_file_open = mock_open()
 
 class TestTrainClass(unittest.TestCase):
     """Test the training base class"""
@@ -252,21 +254,51 @@ class TestTrainClass(unittest.TestCase):
             for batch in train_object.iterate_minibatches(inputs, targets, 1, shuffle=True):
                 pass
 
-    @unittest.skip("Test training in integration tests")
-    def test_train(self):
-        pass
-
-    @unittest.skip("Need to figure out how to mock open")
+    @patch('pickle.dump', mock_pickle)
+    @patch('builtins.open', mock_file_open)
     def test_save_progress(self):
         """Test the correct data is pickled"""
         train_object = train.trainBase()
+
+        # Assign some data to pickle
+
+        expected_data = {
+                'weights': [1, 2],
+                'curr_epoch': 100,
+                'best_valid_err': 33,
+                'best_train_err': 15,
+                'y_train_err_history': [78, 98],
+                'y_valid_err_history': [102, 233],
+                }
+
+        train_object.best_weights = expected_data['weights'] 
+        train_object.current_epoch = expected_data['curr_epoch'] 
+        train_object.best_valid_err = expected_data['best_valid_err'] 
+        train_object.best_train_err = expected_data['best_train_err'] 
+        train_object.y_train_err_history = expected_data['y_train_err_history'] 
+        train_object.y_valid_err_history = expected_data['y_valid_err_history'] 
+
         train_object.save_progress()
 
-    @unittest.skip("Need to figure out how to mock open")
+        mock_file_open.assert_called_with('trainBase.pkl', 'wb')
+
+        mock_pickle.assert_called_once_with(expected_data, mock_file_open())
+
     def test_load_progress(self):
         """Test the correct data is being loaded from the pickle"""
         train_object = train.trainBase()
-        train_object.save_progress()
+
+        expected_data = {
+                'weights': [1, 2],
+                'curr_epoch': 10,
+                'best_valid_err': 12,
+                'best_train_err': 13,
+                'y_train_err_history': [7, 8, 9],
+                'y_valid_err_history': [10, 11, 12],
+                }
+
+        train_object.load_progress(os.path.join(os.path.dirname(__file__),'trainBase.pkl'))
+        self.assertEqual(train_object.best_weights, expected_data['weights'])
 
     def test_prepare_log(self):
         """Check the log filenames are correctly established - no existing log exists"""
