@@ -30,6 +30,9 @@ tests_functional:
 tests_unit: 
 	nosetests $(FLAGS) $@ $(COVERAGE)
 
+build:
+	cd ../; python setup.py bdist_wheel; cd -
+
 all: test 
 
 .PHONY: all tests_functional tests_unit clean
