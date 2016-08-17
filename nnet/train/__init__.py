@@ -10,6 +10,8 @@ Network training functionality
 from . import adaptiverates
 import nnet.resources as resources
 import theano
+from lasagne.nonlinearities import rectify, linear
+from lasagne.init import Normal
 from lasagne.layers import InputLayer, DenseLayer, get_output, \
         get_all_params, get_all_param_values
 from lasagne.objectives import squared_error, aggregate
@@ -112,16 +114,22 @@ class trainBase(object):
         input_layer = InputLayer(
                 input_var=self.input_var,
                 shape=(None, DEFAULT_IMAGE_SIZE),
+                W=Normal(0.01),
+                b=Normal(0.01),
                 name='input',
                 )
 
         hidden_layer = DenseLayer(
                 input_layer,
-                num_units=9600,
+                nonlinearity=rectify,
+                W=Normal(0.01),
+                b=Normal(0.01),
+                num_units=500,
                 name='hidden',
                 )
         output_layer = DenseLayer(
                 hidden_layer,
+                nonlinearity=linear,
                 num_units=30,
                 name='output'
                 )
@@ -259,15 +267,6 @@ class trainBase(object):
 
             self.y_train_err_history.append(train_err)
 
-            # valid_err = 0
-            # valid_batches = 0
-            # for batch in self.iterate_minibatches(self.x_valid, self.y_valid,
-            #        self.batch_size, shuffle=True):
-            #    inputs, targets = batch
-            #    err  = self.valid_loss(inputs.reshape(-1, 1, self.image_size, self.image_size), targets)
-            #    valid_err += err
-            #    valid_batches += 1
-            # valid_err /= valid_batches
             valid_err = self.valid_loss(self.x_valid, self.y_valid)
 
             self.y_valid_err_history.append(valid_err)
@@ -308,6 +307,28 @@ class trainBase(object):
                          )
             i += 1
 
+    def test_model(self, max_epochs=200):
+        """This method is used to execute a basic test of the model.  When trained with a single example
+        and validated against this example the validation error should be approximately zero"""
+        self.build_model()
+        self.load_data()
+
+        self.max_epochs = max_epochs
+
+        # Make the training data set only a single sample
+        self.x_train = self.x_train[:1,:] 
+        self.y_train = self.y_train[:1,:] 
+
+        # Test the network is capable of memorising the training sample
+        self.x_valid = self.x_train[:1,:] 
+        self.y_valid = self.y_train[:1,:] 
+
+        self.train()
+
+        np.testing.assert_almost_equal(self.best_valid_err,0,
+                                       err_msg="Single sample did not memorize")
+
+
     def save_progress(self):
         save_data = {
                 'weights': self.best_weights,
@@ -320,7 +341,7 @@ class trainBase(object):
         with open(self.save_params_filename, "wb") as f:
             pickle.dump(save_data, f)
 
-    def load_progress(self):
+    def load_progress(self, filename):
         with open(filename, "rb") as f:
             load_data = pickle.load(f)
 
