@@ -8,6 +8,7 @@ Test the resources module of the package
 
 # Imports
 import unittest
+from unittest.mock import mock_open, patch
 import nnet.resources as resources
 import os
 import pandas
@@ -18,6 +19,8 @@ __author__ = 'Ben Johnston'
 __revision__ = '0.1'
 __date__ = '04-Aug-2016 14:34:55 AEST'
 __license__ = 'MPL v2.0'
+
+mock_file_open = mock_open()
 
 def assert_data_division(utest_obj, x_train, y_train, x_valid, y_valid, split_ratio, split_ratio_calculated):
     # Check equal lengths
@@ -71,6 +74,12 @@ class TestResources(unittest.TestCase):
         self.assertEqual(train_data[2].shape[0], train_data[3].shape[0])
         self.assertEqual(train_data[0].shape[1], train_data[2].shape[1])
         self.assertEqual(train_data[1].shape[1], train_data[3].shape[1])
+
+    def test_load_data_from_different_file(self):
+        """Test load_data tries to load from a different file, when not present and exception is raised"""
+
+        with self.assertRaises(OSError):
+            train_data = resources.load_data("new_training_set.csv")
 
     def test_remove_incomplete(self):
         """Remove incomplete data"""

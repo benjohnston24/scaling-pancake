@@ -14,7 +14,7 @@ import time
 import numpy as np
 
 __author__ = 'Ben Johnston'
-__revision__ = '0.1'
+__revision__ = '0.1.1'
 __date__ = '04-Aug-2016 16:28:02 AEST'
 __license__ = 'MPL v2.0'
 
@@ -30,10 +30,6 @@ __all__ = [
         "split_training_data",
         "load_data",
         ]
-
-
-
-
 
 def load_training_data(filename=DEFAULT_TRAIN_SET):
     """Load the training set
@@ -114,7 +110,7 @@ def load_data(filename=DEFAULT_TRAIN_SET, dropna=True, split_ratio=0.7):
     a list of np.arrays containing the training and validation sets
     [train_in, train_targets, valid_in, valid_targets]
     """
-    data = load_training_data()
+    data = load_training_data(filename)
     if dropna:
         data = remove_incomplete_data(data)
     x, y = extract_image_landmarks(data)

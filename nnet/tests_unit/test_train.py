@@ -299,6 +299,11 @@ class TestTrainClass(unittest.TestCase):
 
         train_object.load_progress(os.path.join(os.path.dirname(__file__),'trainBase.pkl'))
         self.assertEqual(train_object.best_weights, expected_data['weights'])
+        self.assertEqual(train_object.current_epoch, expected_data['curr_epoch'])
+        self.assertEqual(train_object.best_valid_err, expected_data['best_valid_err'])
+        self.assertEqual(train_object.best_train_err, expected_data['best_train_err'])
+        self.assertEqual(train_object.y_train_err_history, expected_data['y_train_err_history'])
+        self.assertEqual(train_object.y_valid_err_history, expected_data['y_valid_err_history'])
 
     def test_prepare_log(self):
         """Check the log filenames are correctly established - no existing log exists"""
