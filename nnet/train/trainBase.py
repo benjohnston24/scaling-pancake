@@ -11,7 +11,7 @@ import theano
 from lasagne.nonlinearities import rectify, linear
 from lasagne.init import Normal
 from lasagne.layers import InputLayer, DenseLayer, get_output, \
-        get_all_params, get_all_param_values
+        get_all_params, get_all_param_values, set_all_param_values
 from lasagne.objectives import squared_error, aggregate
 from lasagne.updates import nesterov_momentum
 import numpy as np
@@ -352,6 +352,12 @@ class trainBase(object):
         self.best_train_err = load_data['best_train_err']
         self.y_train_err_history = load_data['y_train_err_history']
         self.y_valid_err_history = load_data['y_valid_err_history']
+
+        self.load_best_weights()
+
+    def load_best_weights(self):
+        set_all_param_values(self.network, self.best_weights)
+
 
     # Logging functionality
     def _prepare_log(self):
