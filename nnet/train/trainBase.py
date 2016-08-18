@@ -306,11 +306,13 @@ class trainBase(object):
                          )
             i += 1
 
-    def test_model(self, max_epochs=200):
+    def test_model(self, max_epochs=200, load_training_data=True):
         """This method is used to execute a basic test of the model.  When trained with a single example
         and validated against this example the validation error should be approximately zero"""
         self.build_model()
-        self.load_data()
+
+        if load_training_data:
+            self.load_data()
 
         self.max_epochs = max_epochs
 
