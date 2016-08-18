@@ -9,7 +9,8 @@ Test the training module of the package
 # Imports
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
-import nnet.train as train
+from nnet.train import trainBase as train
+from nnet.train import adaptiverates as adaptiverates
 from nnet.tests_unit.test_resources import assert_data_division 
 import theano
 import lasagne
@@ -20,7 +21,7 @@ import os
 
 __author__ = 'Ben Johnston'
 __revision__ = '0.1'
-__date__ = '04-Aug-2016 23:25:33 AEST'
+__date__ = '18-Aug-2016 11:18:07 AEST'
 __license__ = 'MPL v2.0'
 
 
@@ -29,12 +30,12 @@ class TestRates(unittest.TestCase):
 
     def test_fixed_rate(self):
         """Test fixed rate learning rate"""
-        rate = train.adaptiverates.fixedRate(0.2)
+        rate = adaptiverates.fixedRate(0.2)
         self.assertEqual(rate(), 0.2)
 
     def test_linear_rate(self):
         """Test linear rate learning rate"""
-        rate = train.adaptiverates.linearRate(start=10, end=1, epochs=10)
+        rate = adaptiverates.linearRate(start=10, end=1, epochs=10)
         rate_check = 10
 
         for step in rate:

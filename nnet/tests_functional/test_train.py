@@ -7,7 +7,7 @@
 # Imports
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
-import nnet.train as train
+from nnet.train import trainBase as train
 import theano
 import lasagne
 import numpy as np
@@ -16,7 +16,7 @@ import time
 
 __author__ = 'Ben Johnston'
 __revision__ = '0.1'
-__date__  = 'Thursday 11 August  12:40:37 AEST 2016'
+__date__  = 'Thursday 11 August 12:40:37 AEST 2016'
 __license__ = 'MPL v2.0'
 
 
