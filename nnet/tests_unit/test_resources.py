@@ -14,6 +14,7 @@ import os
 import pandas
 import numpy as np
 from collections import OrderedDict
+import random
 
 __author__ = 'Ben Johnston'
 __revision__ = '0.1'
@@ -74,6 +75,12 @@ class TestResources(unittest.TestCase):
         self.assertEqual(train_data[2].shape[0], train_data[3].shape[0])
         self.assertEqual(train_data[0].shape[1], train_data[2].shape[1])
         self.assertEqual(train_data[1].shape[1], train_data[3].shape[1])
+
+    def test_load_data_different(self):
+        """Test the loaded data is in fact different"""
+        x_train, y_train, x_valid, y_valid = resources.load_data()
+        self.assertFalse(np.all(x_train == x_valid))
+        self.assertFalse(np.all(y_train == y_valid))
 
     def test_load_data_from_different_file(self):
         """Test load_data tries to load from a different file, when not present and exception is raised"""
@@ -139,13 +146,18 @@ class TestResources(unittest.TestCase):
     def test_splitting_training_data(self):
         """Test default train / valid set split"""
         train_data = pandas.DataFrame({
-            'left_eye_center_x': pandas.Series([1] * 10),
-            'left_eye_center_y': pandas.Series([2] * 10),
-            'left_eye_inner_corner_x': pandas.Series([3] * 10),
-            'right_eye_center_x': pandas.Series([4] * 10),
-            'right_eye_center_y': pandas.Series([5] * 10),
-            'Image': pandas.Series(["255 255 255 255"] * 10),
+            'left_eye_center_x': pandas.Series(random.sample(range(1000), 10)),
+            'left_eye_center_y': pandas.Series(random.sample(range(1000), 10)),
+            'left_eye_inner_corner_x': pandas.Series(random.sample(range(1000), 10)),
+            'right_eye_center_x': pandas.Series(random.sample(range(1000), 10)),
+            'right_eye_center_y': pandas.Series(random.sample(range(1000), 10)),
+            'Image': pandas.Series([
+               "".join(["%s " % str(x) for x in random.sample(range(255), 4)]).strip() 
+               for i in range(10)
+                ]),
         })
+
+        # Generate random images
 
         x, y = resources.extract_image_landmarks(train_data)
 
@@ -158,3 +170,11 @@ class TestResources(unittest.TestCase):
                 # Check the shape of the features
                 self.assertEqual(x_train.shape[1], 4)
                 self.assertEqual(y_train.shape[1], 5)
+                self.assertEqual(x_train.shape[0], y_train.shape[0])
+                self.assertEqual(x_valid.shape[1], 4)
+                self.assertEqual(y_valid.shape[1], 5)
+                self.assertEqual(x_valid.shape[0], y_valid.shape[0])
+
+                # Check the data is not equal
+                self.assertFalse(np.all(x_train == x_valid))
+                self.assertFalse(np.all(y_train == y_valid))

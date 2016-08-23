@@ -2,7 +2,7 @@
 # S.D.G
 
 __author__ = 'Ben Johnston'
-__revision__ = '0.2.2'
+__revision__ = '0.3.0'
 __date__ = 'Friday 19 August 00:13:47 AEST 2016'
 __license__ = 'MPL v2.0'
 
