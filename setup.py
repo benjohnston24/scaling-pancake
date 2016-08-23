@@ -2,8 +2,8 @@
 # S.D.G
 
 __author__ = 'Ben Johnston'
-__revision__ = '0.2.1'
-__date__ = '17-Aug-2016 14:54:35 AEST'
+__revision__ = '0.2.2'
+__date__ = 'Friday 19 August 00:13:47 AEST 2016'
 __license__ = 'MPL v2.0'
 
 from setuptools import setup, find_packages

@@ -21,8 +21,8 @@ import time
 
 
 __author__ = 'Ben Johnston'
-__revision__ = '0.1'
-__date__ = "Thursday 18 August 10:38:47 AEST 2016"
+__revision__ = '0.2'
+__date__ = "Thursday 19 August 00:13:47 AEST 2016"
 __license__ = 'MPL v2.0'
 
 __all__ = [
@@ -161,10 +161,12 @@ class trainBase(object):
 
     def build_model(self):
         # Define the model prior to building it
-        self.model()
-        self._generate_layer_list()
+        if not hasattr(self,'network'): 
+            self.model()
+            self._generate_layer_list()
 
         # Print the model architecture
+        self.log_msg("Network Architecture")
         self.log_msg(self.model_str())
 
         # Training loss
@@ -232,6 +234,7 @@ class trainBase(object):
             self.build_model()
 
         self.log_msg("Batch Size: %s" % self.batch_size)
+        self.log_msg("Max epochs: %s" % self.max_epochs)
         self.log_msg("Patience: %s" % self.patience)
 
         # Print the header
@@ -273,7 +276,7 @@ class trainBase(object):
 
             improvement = ' '
             # Check the validation error to see if it is time to exit
-            if valid_err < self.best_valid_err:
+            if (valid_err < self.best_valid_err):
                 self.best_epoch = i
                 self.best_valid_err = valid_err
                 self.best_weights = get_all_param_values(self.network)
@@ -292,6 +295,7 @@ class trainBase(object):
                 self.log_msg("Early Stopping")
                 self.log_msg("Best validation error: %0.6f at epoch %d" %
                              (self.best_valid_err, self.best_epoch))
+                self.log_msg(LINE)
                 break
 
             self.log_msg(
@@ -352,8 +356,6 @@ class trainBase(object):
         self.best_train_err = load_data['best_train_err']
         self.y_train_err_history = load_data['y_train_err_history']
         self.y_valid_err_history = load_data['y_valid_err_history']
-
-        self.load_best_weights()
 
     def load_best_weights(self):
         set_all_param_values(self.network, self.best_weights)

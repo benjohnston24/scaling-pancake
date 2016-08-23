@@ -102,6 +102,26 @@ class TestTrainClass(unittest.TestCase):
             current_layer = current_layer.input_layer
         self.assertEqual(layer_count, 3, "Incorrect number of layers in default nnet")
 
+    def test_model_different_num_nodes(self):
+        """Test the default model architecture with a different number of nodes is a simple single layer neural network - input-hidden-output layers"""
+        train_object = train.trainBase()
+        train_object.model(num_units=10)
+
+        # Check the hidden layer has the correct number of units
+        self.assertEqual(train_object.network.input_layer.num_units, 10,
+                         "Incorrect number of hidden layer units")
+
+    def test_model_different_num_nodes_build(self):
+        """Test the default model architecture with a different number of nodes with model building"""
+        train_object = train.trainBase()
+        train_object.model(num_units=10)
+        train_object.build_model()
+
+        # Check the hidden layer has the correct number of units
+        self.assertEqual(train_object.network.input_layer.num_units, 10,
+                         "Incorrect number of hidden layer units")
+
+
     def test_model_layer_shape(self):
         """Test the shape of the layers in the network"""
         train_object = train.trainBase()
