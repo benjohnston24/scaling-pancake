@@ -21,8 +21,8 @@ import time
 
 
 __author__ = 'Ben Johnston'
-__revision__ = '0.2'
-__date__ = "Thursday 19 August 00:13:47 AEST 2016"
+__revision__ = '0.3'
+__date__ = "Wednesday 24 August 14:35:57 AEST 2016"
 __license__ = 'MPL v2.0'
 
 __all__ = [
@@ -295,6 +295,8 @@ class trainBase(object):
                 self.log_msg("Early Stopping")
                 self.log_msg("Best validation error: %0.6f at epoch %d" %
                              (self.best_valid_err, self.best_epoch))
+
+                self.save_progress()
                 self.log_msg(LINE)
                 break
 
