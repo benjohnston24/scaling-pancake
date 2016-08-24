@@ -331,6 +331,7 @@ class trainBase(object):
         self.train()
 
         np.testing.assert_almost_equal(self.best_valid_err,0,
+                                       decimal=6,
                                        err_msg="Single sample did not memorize")
 
 
