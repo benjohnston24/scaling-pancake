@@ -23,6 +23,7 @@ MNIST_TRAIN_IMAGES = os.path.join(RESOURCE_DIR, 'train-images-idx3-ubyte.gz')
 MNIST_TRAIN_LABELS = os.path.join(RESOURCE_DIR, 'train-labels-idx1-ubyte.gz')
 MNIST_TEST_IMAGES = os.path.join(RESOURCE_DIR, 't10k-images-idx3-ubyte.gz')
 MNIST_TEST_LABELS = os.path.join(RESOURCE_DIR, 't10k-labels-idx1-ubyte.gz')
+MNIST_IMAGE_SIZE = 28 ** 2
 MNIST_NUMBER_LABELS = 10
 
 def import_training_csv(filename):

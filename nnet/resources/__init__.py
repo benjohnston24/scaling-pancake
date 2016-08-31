@@ -10,6 +10,7 @@ from .data import (
         MNIST_TEST_IMAGES,
         MNIST_TEST_LABELS,
         MNIST_NUMBER_LABELS,
+        MNIST_IMAGE_SIZE,
         load_training_data,
         remove_incomplete_data,
         extract_image_landmarks,

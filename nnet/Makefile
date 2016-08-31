@@ -19,16 +19,15 @@
 #############################################################################
 
 COVERAGE=--with-coverage --cover-html --cover-package=nnet
-FLAGS=-s
 
 test: 
-	nosetests $(FLAGS) $(COVERAGE)  
+	nosetests $(COVERAGE)  
 
 tests_functional: 
-	nosetests $(FLAGS) $@ $(COVERAGE)
+	nosetests $@ $(COVERAGE)
 
 tests_unit: 
-	nosetests $(FLAGS) $@ $(COVERAGE)
+	nosetests $@ $(COVERAGE)
 
 build:
 	cd ../; python setup.py bdist_wheel; cd -

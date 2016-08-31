@@ -200,6 +200,19 @@ class TestTrainClass(unittest.TestCase):
         # Check is instance of theano.function
         self.assertIsInstance(train_object.predict, type(theano.function(inputs=[])))
 
+    def test_use_of_non_momentum_update(self):
+        """Test building a model using an update method that does not have a momentum property"""
+
+        train_object = train.trainBase(verbose=False, 
+                                       updates=lasagne.updates.sgd,
+                                       max_epochs=200,
+                                       ) 
+        train_object.build_model()
+
+        # If an error is not thrown the model has built correctly
+        self.assertIsInstance(train_object.valid_loss, type(theano.function(inputs=[])))
+
+
     def test_iterate_minibatches_size(self):
         """Test the correct size of data returned by minibatches - no shuffle"""
         train_object = train.trainBase()
@@ -354,3 +367,17 @@ class TestTrainClass(unittest.TestCase):
                          "incorrect log filename")
         self.assertEqual(train_object.save_params_filename, "test_prepare.pkl.1", 
                          "incorrect pickle filename")
+
+    def test_info_logging(self):
+        """Test the logging method correctly logs"""
+
+        train_object = train.trainBase(name="test_log", verbose=True)
+
+        file_patch = mock_open()
+
+        with patch('builtins.open',file_patch):
+            train_object.log_msg('test')
+
+        file_patch.assert_called_with('test_log.log', 'a')
+        handle = file_patch()
+        handle.write.assert_called_once_with('test\n')
