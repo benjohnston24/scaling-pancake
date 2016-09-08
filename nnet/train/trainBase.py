@@ -21,8 +21,8 @@ import time
 
 
 __author__ = 'Ben Johnston'
-__revision__ = '0.3'
-__date__ = "Wednesday 24 August 14:35:57 AEST 2016"
+__revision__ = '0.4'
+__date__ = 'Friday 9 September  00:20:47 AEST 2016'
 __license__ = 'MPL v2.0'
 
 __all__ = [
@@ -296,7 +296,6 @@ class trainBase(object):
                 self.log_msg("Best validation error: %0.6f at epoch %d" %
                              (self.best_valid_err, self.best_epoch))
 
-                self.save_progress()
                 self.log_msg(LINE)
                 break
 
@@ -311,6 +310,7 @@ class trainBase(object):
                                 "%0.6E" % self.learning_rate_tensor.get_value())
                          )
             i += 1
+        self.save_progress()
 
     def test_model(self, max_epochs=200, load_training_data=True):
         """This method is used to execute a basic test of the model.  When trained with a single example

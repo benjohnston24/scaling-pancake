@@ -7,6 +7,7 @@ __date__ = 'Wednesday 24 August 14:38:47 AEST 2016'
 __license__ = 'MPL v2.0'
 
 from setuptools import setup, find_packages
+from nnet.__init__ import __version__ as nnet_version
 
 setup(
     name='nnet',
@@ -14,7 +15,7 @@ setup(
     url='',
     author='Ben Johnston',
     author_email='bjohnston24@gmail.com',
-    version=__revision__,
+    version=nnet_version,
     packages=find_packages(),
     #packages=open('requirements.txt').read().split('\n')[:-1],
     #license=open('LICENSE.txt').read(),
