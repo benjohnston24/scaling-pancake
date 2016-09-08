@@ -23,6 +23,9 @@ class TestMNISTData(unittest.TestCase):
 
         images = load_mnist_test_images()
 
+        self.assertEqual(images.dtype, np.float32,
+                         'images should be type np.float32')
+
         self.assertEqual(images.shape[0], 10000,
                          "The test set should contain 10k images")
         self.assertEqual(images.shape[1], 28,
@@ -40,6 +43,10 @@ class TestMNISTData(unittest.TestCase):
         last_label[6] = 1
 
         labels = load_mnist_test_labels()
+
+        self.assertEqual(labels.dtype, np.float32,
+                         'images should be type np.float32')
+
         self.assertEqual(labels.shape[0], 10000,
                          "The test set should contain 10k images")
         self.assertEqual(labels.shape[1], 10,
@@ -52,6 +59,9 @@ class TestMNISTData(unittest.TestCase):
     def test_load_mnist_train_images(self):
         """Test the MNIST training set images load correctly"""
         images = load_mnist_train_images()
+
+        self.assertEqual(images.dtype, np.float32,
+                         'images should be type np.float32')
 
         self.assertEqual(images.shape[0], 60000,
                          "The test set should contain 10k images")
@@ -70,6 +80,10 @@ class TestMNISTData(unittest.TestCase):
         last_label[8] = 1
 
         labels = load_mnist_train_labels()
+
+        self.assertEqual(labels.dtype, np.float32,
+                         'images should be type np.float32')
+
         self.assertEqual(labels.shape[0], 60000,
                          "The test set should contain 10k images")
         self.assertEqual(labels.shape[1], 10,

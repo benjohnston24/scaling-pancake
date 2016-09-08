@@ -288,6 +288,7 @@ class TestTrainClass(unittest.TestCase):
             for batch in train_object.iterate_minibatches(inputs, targets, 1, shuffle=True):
                 pass
 
+    @unittest.skip("Need to test without actually writing file")
     @patch('pickle.dump', mock_pickle)
     @patch('builtins.open', mock_file_open)
     def test_save_progress(self):
@@ -318,6 +319,7 @@ class TestTrainClass(unittest.TestCase):
 
         mock_pickle.assert_called_once_with(expected_data, mock_file_open())
 
+    @unittest.skip("Need to test without actually writing file")
     def test_load_progress(self):
         """Test the correct data is being loaded from the pickle"""
         train_object = train.trainBase()

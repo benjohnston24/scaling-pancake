@@ -23,7 +23,7 @@ import inspect
 
 
 __author__ = 'Ben Johnston'
-__revision__ = '0.3'
+__revision__ = '0.4'
 __date__ = "Wednesday 24 August 14:35:57 AEST 2016"
 __license__ = 'MPL v2.0'
 
@@ -224,11 +224,13 @@ class trainBase(object):
         if self.objective is squared_error:
             self.valid_loss = theano.function(
                     inputs=[self.input_var, self.output_var],
-                    outputs=validation_loss)
+                    outputs=validation_loss,
+                    )
         else:
             self.valid_loss = theano.function(
                     inputs=[self.input_var, self.output_var],
-                    outputs=[validation_loss, cat_accuracy])
+                    outputs=[validation_loss, cat_accuracy],
+                    )
 
         # Define predict
         self.predict = theano.function(
@@ -298,7 +300,7 @@ class trainBase(object):
         prev_weights = None
         prev_train_err = np.inf
         self.best_valid_err = np.inf
-
+        self.best_epoch = 0
 
         for i in range(self.current_epoch, self.max_epochs):
             start_time = time.time()
@@ -339,7 +341,7 @@ class trainBase(object):
             curr_learning_rate = np.cast['float32'](curr_learning_rate)
             self.learning_rate_tensor.set_value(np.float32(curr_learning_rate))
 
-            if ((i - self.best_epoch) > self.patience) or (valid_err == 0):
+            if ((i - self.best_epoch) > self.patience):
                 self.log_msg("Early Stopping")
                 self.log_msg("Best validation error: %0.6f at epoch %d" %
                              (self.best_valid_err, self.best_epoch))

@@ -213,6 +213,7 @@ def load_mnist_images(filename=MNIST_TRAIN_IMAGES):
         buf = bytestream.read(num_images * rows * cols)
         data = np.frombuffer(buf, dtype=np.uint8)
         data = data.reshape(num_images, rows, cols)
+        data = data.astype(np.float32)
         return data
 
 def load_mnist_labels(filename=MNIST_TRAIN_LABELS):
@@ -245,5 +246,6 @@ def load_mnist_labels(filename=MNIST_TRAIN_LABELS):
         encoding = np.zeros((num_labels, MNIST_NUMBER_LABELS)) 
         for idx, label in enumerate(data):
             encoding[idx, label] = 1
+        encoding = encoding.astype(np.float32)
         return encoding 
 

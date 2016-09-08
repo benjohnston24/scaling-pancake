@@ -8,6 +8,7 @@
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
 from nnet.train import trainBase as train
+from nnet.train.adaptiverates import fixedRate
 from nnet.resources import load_mnist_test_images, load_mnist_test_labels, \
         MNIST_IMAGE_SIZE, MNIST_NUMBER_LABELS
 import theano
@@ -86,7 +87,8 @@ class TestTrainingFunctional(unittest.TestCase):
     def test_classification_error_to_zero(self):
         """Test the base class can train a classification task to zero"""
 
-        train_object = trainMNIST(verbose=False,
+        train_object = trainMNIST(verbose=True,
+                                  learning_rate=fixedRate(0.0001),
                                   objective=lasagne.objectives.categorical_crossentropy,
                                   updates=lasagne.updates.sgd,
                                   max_epochs=200,
