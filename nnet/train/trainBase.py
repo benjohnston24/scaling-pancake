@@ -8,16 +8,18 @@
 from . import adaptiverates
 import nnet.resources as resources
 import theano
+import theano.tensor as T
 from lasagne.nonlinearities import rectify, linear
 from lasagne.init import Normal
 from lasagne.layers import InputLayer, DenseLayer, get_output, \
         get_all_params, get_all_param_values, set_all_param_values
-from lasagne.objectives import squared_error, aggregate
+from lasagne.objectives import squared_error, aggregate, categorical_crossentropy
 from lasagne.updates import nesterov_momentum
 import numpy as np
 import os
 from six.moves import cPickle as pickle
 import time
+import inspect
 
 
 __author__ = 'Ben Johnston'
@@ -30,6 +32,7 @@ __all__ = [
         "DEFAULT_LOG_EXTENSION",
         "DEFAULT_PKL_EXTENSION",
         "trainBase",
+        "LINE",
         ]
 
 
@@ -37,7 +40,6 @@ DEFAULT_IMAGE_SIZE = 96 ** 2
 DEFAULT_LOG_EXTENSION = '.log'
 DEFAULT_PKL_EXTENSION = '.pkl'
 LINE = "-" * 156
-
 
 class trainBase(object):
 
@@ -171,26 +173,38 @@ class trainBase(object):
 
         # Training loss
         train_prediction = get_output(self.network)
-        train_loss = aggregate(self.objective(train_prediction, self.output_var))
+        train_loss = aggregate(self.objective(train_prediction, self.output_var),
+                               mode='mean')
         self.log_msg("Objective: {}".format(self.objective.__name__))
 
         # Validation loss
         validation_prediction = get_output(self.network, deterministic=True)
-        validation_loss = aggregate(self.objective(validation_prediction, self.output_var))
+        validation_loss = aggregate(self.objective(validation_prediction, self.output_var),
+                                    mode='mean')
 
         # Update the parameters
         params = get_all_params(self.network, trainable=True)
-        updates = self.updates(
-                loss_or_grads=train_loss,
-                params=params,
-                learning_rate=self.learning_rate_tensor,
-                momentum=self.momentum_tensor,
-                )
+        popts = {
+                'loss_or_grads': train_loss, 
+                'params': params, 
+                'learning_rate': self.learning_rate_tensor, 
+                'momentum': self.momentum_tensor,
+                }
+        # Inspect to see if momentum is a valid argument for the update
+        update_args = inspect.getargspec(self.updates)[0]
+        
+        # Remove momentum if not applicable
+        if not 'momentum' in update_args:
+            del popts['momentum']
+
+        updates = self.updates(**popts)
 
         # Print the learning rate type
         self.log_msg('Update: %s' % self.updates.__name__)
         self.log_msg("Learning Rate: %s" % self.learning_rate.__name__)
-        self.log_msg("Momentum: %s" % self.momentum.__name__)
+
+        if 'momentum' in popts.keys():
+            self.log_msg("Momentum: %s" % self.momentum.__name__)
 
         # Define training loss function
         self.train_loss = theano.function(
@@ -200,15 +214,33 @@ class trainBase(object):
                 allow_input_downcast=True,
                 )
 
+        # Define the accuracy function for categorisation problems
+        cat_accuracy = T.mean(T.eq( 
+                T.argmax(validation_prediction, axis=1),
+                T.argmax(self.output_var, axis=1),
+                ))
+
         # Define validation loss function
-        self.valid_loss = theano.function(
-                inputs=[self.input_var, self.output_var],
-                outputs=validation_loss)
+        if self.objective is squared_error:
+            self.valid_loss = theano.function(
+                    inputs=[self.input_var, self.output_var],
+                    outputs=validation_loss,
+                    )
+        else:
+            self.valid_loss = theano.function(
+                    inputs=[self.input_var, self.output_var],
+                    outputs=[validation_loss, cat_accuracy],
+                    )
 
         # Define predict
         self.predict = theano.function(
                 inputs=[self.input_var],
                 outputs=validation_prediction)
+
+        self.train_predict = theano.function(
+                inputs=[self.input_var],
+                outputs=train_prediction)
+
 
     def iterate_minibatches(self, inputs, targets, batchsize, shuffle=False):
         """Iterate minibatches"""
@@ -237,24 +269,38 @@ class trainBase(object):
         self.log_msg("Max epochs: %s" % self.max_epochs)
         self.log_msg("Patience: %s" % self.patience)
 
-        # Print the header
-        self.log_msg(LINE)
-        self.log_msg(
-                     "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".
-                     format("Epoch",
-                            "Train Error",
-                            "Valid Error",
-                            "Valid / Train Error",
-                            "Time",
-                            "Best Error",
-                            "Learning Rate")
-                     )
-        self.log_msg(LINE)
+        if self.objective is not squared_error:
+            # Print the header
+            self.log_msg(LINE + "-" * 20)
+        else:
+            self.log_msg(LINE)
+
+        header = \
+             "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".format(
+                 "Epoch",
+                 "Train Error",
+                 "Valid Error",
+                 "Valid / Train Error",
+                 "Time",
+                 "Best Error",
+                 "Learning Rate",
+                 )
+
+        if self.objective is not squared_error:
+            header += "{:^20}|".format("Accuracy (%)")
+
+        self.log_msg(header)
+
+        if self.objective is not squared_error:
+            # Print the header
+            self.log_msg(LINE + "-" * 20)
+        else:
+            self.log_msg(LINE)
 
         prev_weights = None
         prev_train_err = np.inf
         self.best_valid_err = np.inf
-
+        self.best_epoch = 0
 
         for i in range(self.current_epoch, self.max_epochs):
             start_time = time.time()
@@ -269,7 +315,11 @@ class trainBase(object):
 
             self.y_train_err_history.append(train_err)
 
-            valid_err = self.valid_loss(self.x_valid, self.y_valid)
+            if self.objective is squared_error:
+                valid_err = self.valid_loss(self.x_valid, self.y_valid)
+            else:
+                valid_err, valid_acc = self.valid_loss(self.x_valid, self.y_valid)
+
 
             self.y_valid_err_history.append(valid_err)
             curr_learning_rate = self.learning_rate_tensor.get_value()
@@ -291,7 +341,7 @@ class trainBase(object):
             curr_learning_rate = np.cast['float32'](curr_learning_rate)
             self.learning_rate_tensor.set_value(np.float32(curr_learning_rate))
 
-            if (i - self.best_epoch) > self.patience:
+            if ((i - self.best_epoch) > self.patience):
                 self.log_msg("Early Stopping")
                 self.log_msg("Best validation error: %0.6f at epoch %d" %
                              (self.best_valid_err, self.best_epoch))
@@ -299,16 +349,19 @@ class trainBase(object):
                 self.log_msg(LINE)
                 break
 
-            self.log_msg(
-                         "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".
-                         format(i,
-                                "%0.6f" % np.cast['float32'](train_err),
-                                "%0.6f" % np.cast['float32'](valid_err),
-                                "%0.6f" % (np.cast['float32'](valid_err) / np.cast['float32'](train_err)),
-                                "%0.6f" % (time.time() - start_time),
-                                improvement,
-                                "%0.6E" % self.learning_rate_tensor.get_value())
-                         )
+            data = \
+                "|{:^20}|{:^20}|{:^20}|{:^30}|{:^20}|{:^20}|{:^20}|".format(
+                    i,
+                    "%0.6f" % np.cast['float32'](train_err),
+                    "%0.6f" % np.cast['float32'](valid_err),
+                    "%0.6f" % (np.cast['float32'](valid_err) / np.cast['float32'](train_err)),
+                    "%0.6f" % (time.time() - start_time),
+                    improvement,
+                    "%0.6E" % self.learning_rate_tensor.get_value())
+
+            if self.objective is not squared_error:
+                data += "{:^20}|".format("%0.4f" % (np.float32(valid_acc) * 100))
+            self.log_msg(data)
             i += 1
         self.save_progress()
 
@@ -333,7 +386,7 @@ class trainBase(object):
         self.train()
 
         np.testing.assert_almost_equal(self.best_valid_err,0,
-                                       decimal=6,
+                                       decimal=4,
                                        err_msg="Single sample did not memorize")
 
 
